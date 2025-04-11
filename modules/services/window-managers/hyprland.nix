@@ -5,7 +5,6 @@
   ...
 }:
 let
-
   cfg = config.wayland.windowManager.hyprland;
 
   variables = builtins.concatStringsSep " " cfg.systemd.variables;
@@ -21,31 +20,40 @@ in
   # module.
   imports = [
     (lib.mkRemovedOptionModule # \
+
       [ "wayland" "windowManager" "hyprland" "disableAutoreload" ]
       "Autoreloading now always happens"
     )
 
     (lib.mkRemovedOptionModule # \
+
       [ "wayland" "windowManager" "hyprland" "recommendedEnvironment" ]
       "Recommended environment variables are now always set"
     )
 
     (lib.mkRemovedOptionModule # \
+
       [ "wayland" "windowManager" "hyprland" "xwayland" "hidpi" ]
       "HiDPI patches are deprecated. Refer to https://wiki.hyprland.org/Configuring/XWayland"
     )
 
     (lib.mkRemovedOptionModule # \
+
       [ "wayland" "windowManager" "hyprland" "nvidiaPatches" ] # \
+
       "Nvidia patches are no longer needed"
     )
     (lib.mkRemovedOptionModule # \
+
       [ "wayland" "windowManager" "hyprland" "enableNvidiaPatches" ] # \
+
       "Nvidia patches are no longer needed"
     )
 
     (lib.mkRenamedOptionModule # \
+
       [ "wayland" "windowManager" "hyprland" "systemdIntegration" ] # \
+
       [ "wayland" "windowManager" "hyprland" "systemd" "enable" ]
     )
   ];
@@ -107,6 +115,13 @@ in
       description = ''
         The xdg-desktop-portal-hyprland package after overriding its hyprland input.
       '';
+    };
+
+    hyprctlPath = lib.mkOption {
+      type = with lib.types; nullOr path;
+      default = null;
+      example = "${pkgs.hyprland}/bin/hyprctl";
+      description = ''Path to hyprctl.'';
     };
 
     plugins = lib.mkOption {
@@ -291,7 +306,9 @@ in
                 let
                   mkEntry =
                     entry: if lib.types.package.check entry then "${entry}/lib/lib${entry.pname}.so" else entry;
-                  hyprctl = "${cfg.finalPackage}/bin/hyprctl";
+
+                  hyprctl =
+                    if (cfg.hyprctlPath != null) then "${cfg.hyprctlPath}" else "${cfg.finalPackage}/bin/hyprctl";
                 in
                 map (p: "${hyprctl} plugin load ${mkEntry p}") cfg.plugins;
             };
